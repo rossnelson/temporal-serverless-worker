@@ -95,7 +95,8 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 		ConnectionOptions: client.ConnectionOptions{
 			TLS: tlsConfig,
 		},
-		Credentials: credentials,
+		Credentials:             credentials,
+		WorkerHeartbeatInterval: 10 * time.Second,
 	})
 	if err != nil {
 		return err
