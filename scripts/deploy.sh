@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROLE_ARN="arn:aws:iam::702881634938:role/temporal-assume-role"
-FUNCTION_NAME="temporal-serverless-worker"
-REGION="us-east-1"
+# Load env vars from .env if present
+if [[ -f "$(dirname "$0")/../.env" ]]; then
+  # shellcheck source=/dev/null
+  source "$(dirname "$0")/../.env"
+fi
+
+ROLE_ARN="${ROLE_ARN:?'ROLE_ARN is required. Set it in .env or your environment.'}"
+FUNCTION_NAME="${FUNCTION_NAME:-temporal-serverless-worker}"
+REGION="${REGION:-us-east-1}"
 ZIP_FILE="lambda.zip"
 
 echo "Building..."
