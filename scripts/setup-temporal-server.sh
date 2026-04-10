@@ -60,22 +60,4 @@ ensure_key "$DYNAMIC_CONFIG" "workercontroller.compute_providers.aws.require_rol
 
 log "Dynamic config updated"
 
-# ── Print env for Temporal server ─────────────────────────────────────────────
-cat <<EOF
-
-Run the Temporal server with these env vars (or paste into your shell before 'make start'):
-
-  export AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"
-  export AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"
-  export AWS_REGION="${AWS_DEFAULT_REGION:-us-east-1}"
-EOF
-
-cat <<EOF
-
-Deployment config values:
-  Lambda ARN:   $LAMBDA_ARN
-  IAM Role ARN: $IAM_ROLE_ARN
-  External ID:  $EXTERNAL_ID
-EOF
-
 log "Done"
