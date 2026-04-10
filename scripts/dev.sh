@@ -18,7 +18,8 @@ else
 fi
 
 : "${TEMPORAL_DIR:?'TEMPORAL_DIR is required in .env'}"
-: "${FUNCTION_NAME:?'FUNCTION_NAME is required in .env'}"
+: "${LAMBDA_ARN:?'LAMBDA_ARN is required in .env'}"
+FUNCTION_NAME="${FUNCTION_NAME:-${LAMBDA_ARN##*:function:}}"
 : "${REGION:?'REGION is required in .env'}"
 : "${TQ_NAME:?'TQ_NAME is required in .env'}"
 : "${DEPLOYMENT_NAME:?'DEPLOYMENT_NAME is required in .env'}"

@@ -7,10 +7,10 @@ if [[ -f "$(dirname "$0")/../.env" ]]; then
   source "$(dirname "$0")/../.env"
 fi
 
-ROLE_ARN="${ROLE_ARN:?'ROLE_ARN is required. Set it in .env or your environment.'}"
-FUNCTION_NAME="${FUNCTION_NAME:-temporal-serverless-worker}"
+: "${LAMBDA_ARN:?'LAMBDA_ARN is required. Set it in .env or your environment.'}"
+FUNCTION_NAME="${FUNCTION_NAME:-${LAMBDA_ARN##*:function:}}"
 REGION="${REGION:-us-east-1}"
-LAMBDA_ARCH="${LAMBDA_ARCH:-arm64}"
+LAMBDA_ARCH="${LAMBDA_ARCH:-amd64}"
 ZIP_FILE="lambda.zip"
 
 echo "Building..."
