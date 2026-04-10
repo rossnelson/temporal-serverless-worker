@@ -65,11 +65,11 @@ log "Temporal server PID: $temporal_pid"
 # Wait for Temporal to be ready, then create namespace
 log "Waiting for Temporal server to be ready..."
 for i in $(seq 1 30); do
-  if temporal operator namespace describe "$NAMESPACE" --address localhost:7233 > /dev/null 2>&1; then
+  if temporal operator namespace describe "$NAMESPACE" --address localhost:${TEMPORAL_PORT} > /dev/null 2>&1; then
     log "Namespace '$NAMESPACE' already exists"
     break
   fi
-  if temporal operator namespace create "$NAMESPACE" --address localhost:7233 > /dev/null 2>&1; then
+  if temporal operator namespace create "$NAMESPACE" --address localhost:${TEMPORAL_PORT} > /dev/null 2>&1; then
     log "Namespace '$NAMESPACE' created"
     break
   fi
@@ -90,7 +90,7 @@ log "UI dev server PID: $ui_pid"
 
 # ── Start ngrok ───────────────────────────────────────────────────────────────
 log "Starting ngrok TCP tunnel on port 7233..."
-ngrok tcp 7233 --log=stdout > /tmp/ngrok-dev.log 2>&1 &
+ngrok tcp "$TEMPORAL_PORT" --log=stdout > /tmp/ngrok-dev.log 2>&1 &
 ngrok_pid=$!
 PIDS+=($ngrok_pid)
 log "ngrok PID: $ngrok_pid"
@@ -148,7 +148,7 @@ fi
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "  Dev environment ready"
-echo "  Temporal:  localhost:7233"
+echo "  Temporal:  localhost:${TEMPORAL_PORT}"
 echo "  UI:        http://localhost:3000"
 echo "  ngrok:     $HOST_PORT"
 echo "  Lambda:    $FUNCTION_NAME"

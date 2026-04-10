@@ -10,10 +10,11 @@ fi
 ROLE_ARN="${ROLE_ARN:?'ROLE_ARN is required. Set it in .env or your environment.'}"
 FUNCTION_NAME="${FUNCTION_NAME:-temporal-serverless-worker}"
 REGION="${REGION:-us-east-1}"
+LAMBDA_ARCH="${LAMBDA_ARCH:-arm64}"
 ZIP_FILE="lambda.zip"
 
 echo "Building..."
-GOOS=linux GOARCH=arm64 go build -o bootstrap .
+GOOS=linux GOARCH="$LAMBDA_ARCH" go build -o bootstrap .
 zip -q "$ZIP_FILE" bootstrap
 
 echo "Assuming role $ROLE_ARN..."
