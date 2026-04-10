@@ -81,6 +81,16 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
+# ── Ensure UI is on the correct branch ───────────────────────────────────────
+UI_BRANCH="${UI_BRANCH:-serverless-workers-crud}"
+CURRENT_UI_BRANCH="$(git -C "$UI_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+if [[ "$CURRENT_UI_BRANCH" != "$UI_BRANCH" ]]; then
+  log "UI is on '$CURRENT_UI_BRANCH', switching to '$UI_BRANCH'..."
+  git -C "$UI_DIR" checkout "$UI_BRANCH"
+else
+  log "UI is on '$UI_BRANCH'"
+fi
+
 # ── Start UI dev server ───────────────────────────────────────────────────────
 log "Starting UI dev server in $UI_DIR..."
 (cd "$UI_DIR" && pnpm dev:local-temporal > /tmp/ui-dev.log 2>&1) &
