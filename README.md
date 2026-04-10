@@ -31,35 +31,11 @@ git clone https://github.com/temporalio/ui ~/code/ui
 
 ### 2. Create your `.env`
 
-Copy the template below into `.env` at the root of this repo and fill in your values.
-
 ```bash
-# AWS credentials
-AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY=YOUR_SECRET_ACCESS_KEY
-
-# deploy.sh
-ROLE_ARN=arn:aws:iam::ACCOUNT_ID:role/YOUR_ROLE
-FUNCTION_NAME=YOUR_LAMBDA_FUNCTION_NAME
-REGION=us-east-1
-
-# setup-temporal-server.sh
-TEMPORAL_DIR=/path/to/temporalio/temporal
-NAMESPACE=default
-IAM_ROLE_ARN=arn:aws:iam::ACCOUNT_ID:role/YOUR_ROLE
-LAMBDA_ARN=arn:aws:lambda:us-east-1:ACCOUNT_ID:function:YOUR_LAMBDA_FUNCTION_NAME
-EXTERNAL_ID=YOUR_EXTERNAL_ID
-
-# Worker config
-TQ_NAME=worker-versioning-sample
-DEPLOYMENT_NAME=my-deployment
-BUILD_ID=v1
-
-# Local paths
-UI_PATH=/path/to/temporalio/ui
+cp .env.example .env
 ```
 
-> `IAM_ROLE_ARN` and `ROLE_ARN` are the same role — one is used by the Temporal server to invoke Lambda, the other by `deploy.sh` to upload the binary.
+Fill in your values. See `.env.example` for all required fields.
 
 ### 3. Deploy the Lambda binary
 
