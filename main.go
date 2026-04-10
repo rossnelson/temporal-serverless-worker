@@ -15,9 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 
-	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
-	"go.temporal.io/sdk/converter"
 	"go.temporal.io/sdk/worker"
 	"go.temporal.io/sdk/workflow"
 	"go.uber.org/zap"
@@ -120,8 +118,41 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 	}
 
 	w := worker.New(c, taskQueueName, wOpts)
-	w.RegisterDynamicWorkflow(noopWorkflow, workflow.DynamicRegisterOptions{})
-	w.RegisterDynamicActivity(noopActivity, activity.DynamicRegisterOptions{})
+	w.RegisterWorkflow(FoodOrderWorkflow)
+	w.RegisterWorkflow(PaymentWorkflow)
+	w.RegisterWorkflow(KitchenWorkflow)
+	w.RegisterActivity(BrowseMenu)
+	w.RegisterActivity(PlaceOrder)
+	w.RegisterActivity(AuthorizePayment)
+	w.RegisterActivity(ChargePayment)
+	w.RegisterActivity(SendReceipt)
+	w.RegisterActivity(AcceptOrder)
+	w.RegisterActivity(PrepareFood)
+	w.RegisterActivity(PackageOrder)
+	w.RegisterActivity(DeliverOrder)
+	w.RegisterWorkflow(TripBookingWorkflow)
+	w.RegisterWorkflow(FlightBookingWorkflow)
+	w.RegisterWorkflow(HotelBookingWorkflow)
+	w.RegisterWorkflow(CarRentalWorkflow)
+	w.RegisterActivity(SearchFlights)
+	w.RegisterActivity(SelectFlight)
+	w.RegisterActivity(BookFlight)
+	w.RegisterActivity(CancelFlight)
+	w.RegisterActivity(SearchHotels)
+	w.RegisterActivity(SelectHotel)
+	w.RegisterActivity(BookHotel)
+	w.RegisterActivity(CancelHotel)
+	w.RegisterActivity(SearchCars)
+	w.RegisterActivity(SelectCar)
+	w.RegisterActivity(BookCar)
+	w.RegisterActivity(CancelCar)
+	w.RegisterWorkflow(OrderConfirmationWorkflow)
+	w.RegisterActivity(SubmitOrderToRestaurant)
+	w.RegisterActivity(CheckRestaurantConfirmation)
+	w.RegisterActivity(EscalateToManager)
+	w.RegisterActivity(CancelOrder)
+	w.RegisterActivity(IssueRefund)
+	w.RegisterActivity(NotifyCustomer)
 
 	osSignalChannel := make(chan os.Signal, 1)
 	signal.Notify(osSignalChannel, os.Interrupt, syscall.SIGTERM)
@@ -143,30 +174,6 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 	}
 
 	return nil
-}
-
-func noopWorkflow(ctx workflow.Context, args converter.EncodedValues) (string, error) {
-	logger := workflow.GetLogger(ctx)
-	wfInfo := workflow.GetInfo(ctx)
-
-	logger.Info("Running workflow", "workflow_name", wfInfo.WorkflowType.Name)
-
-	if err := workflow.ExecuteActivity(
-		workflow.WithActivityOptions(ctx, workflow.ActivityOptions{StartToCloseTimeout: 1 * time.Minute}),
-		wfInfo.WorkflowType.Name,
-	).Get(ctx, nil); err != nil {
-		return "", err
-	}
-
-	return "success", nil
-}
-
-func noopActivity(ctx context.Context, args converter.EncodedValues) (string, error) {
-	logger := activity.GetLogger(ctx)
-	actInfo := activity.GetInfo(ctx)
-	logger.Info("Running activity", "activity_name", actInfo.ActivityType.Name)
-
-	return "Success", nil
 }
 
 func getEnvDefault(env, defaultVal string) string {
