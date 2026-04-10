@@ -17,16 +17,6 @@ echo "Building..."
 GOOS=linux GOARCH="$LAMBDA_ARCH" go build -o bootstrap .
 zip -q "$ZIP_FILE" bootstrap
 
-echo "Assuming role $ROLE_ARN..."
-creds=$(aws sts assume-role \
-  --role-arn "$ROLE_ARN" \
-  --role-session-name deploy \
-  --output json)
-
-export AWS_ACCESS_KEY_ID=$(echo "$creds" | python3 -c "import sys,json; print(json.load(sys.stdin)['Credentials']['AccessKeyId'])")
-export AWS_SECRET_ACCESS_KEY=$(echo "$creds" | python3 -c "import sys,json; print(json.load(sys.stdin)['Credentials']['SecretAccessKey'])")
-export AWS_SESSION_TOKEN=$(echo "$creds" | python3 -c "import sys,json; print(json.load(sys.stdin)['Credentials']['SessionToken'])")
-
 echo "Deploying to $FUNCTION_NAME..."
 aws lambda update-function-code \
   --function-name "$FUNCTION_NAME" \
