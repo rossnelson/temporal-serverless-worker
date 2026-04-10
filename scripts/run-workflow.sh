@@ -2,6 +2,21 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env}"
+
+# ── Load env ──────────────────────────────────────────────────────────────────
+if [[ -f "$ENV_FILE" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  set +a
+else
+  echo "ERROR: $ENV_FILE not found" >&2
+  exit 1
+fi
+
 WORKFLOW=${1:-""}
 NAMESPACE=${NAMESPACE:-default}
 TASK_QUEUE=${TQ_NAME:-worker-versioning-sample-ross}
