@@ -34,6 +34,10 @@ git clone https://github.com/temporalio/ui ~/code/ui
 Copy the template below into `.env` at the root of this repo and fill in your values.
 
 ```bash
+# AWS credentials
+AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY=YOUR_SECRET_ACCESS_KEY
+
 # deploy.sh
 ROLE_ARN=arn:aws:iam::ACCOUNT_ID:role/YOUR_ROLE
 FUNCTION_NAME=YOUR_LAMBDA_FUNCTION_NAME

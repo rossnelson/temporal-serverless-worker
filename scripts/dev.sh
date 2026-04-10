@@ -5,7 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 ENV_FILE="${ENV_FILE:-$ROOT_DIR/.env}"
 UI_DIR="${UI_DIR:-}"
-CREDENTIALS_FILE="${CREDENTIALS_FILE:-$HOME/.aws/credentials}"
 
 # ── Load env ──────────────────────────────────────────────────────────────────
 if [[ -f "$ENV_FILE" ]]; then
@@ -24,12 +23,11 @@ fi
 : "${TQ_NAME:?'TQ_NAME is required in .env'}"
 : "${DEPLOYMENT_NAME:?'DEPLOYMENT_NAME is required in .env'}"
 : "${BUILD_ID:?'BUILD_ID is required in .env'}"
+: "${AWS_ACCESS_KEY_ID:?'AWS_ACCESS_KEY_ID is required in .env'}"
+: "${AWS_SECRET_ACCESS_KEY:?'AWS_SECRET_ACCESS_KEY is required in .env'}"
 NAMESPACE="${NAMESPACE:-default}"
 UI_DIR="${UI_DIR:-${UI_PATH:?'UI_PATH is required in .env'}}"
 
-# ── AWS credentials ───────────────────────────────────────────────────────────
-AWS_ACCESS_KEY_ID="$(awk -F' *= *' '/aws_access_key_id/    {print $2; exit}' "$CREDENTIALS_FILE")"
-AWS_SECRET_ACCESS_KEY="$(awk -F' *= *' '/aws_secret_access_key/ {print $2; exit}' "$CREDENTIALS_FILE")"
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION="${REGION}"
 
 # ── Process tracking ──────────────────────────────────────────────────────────

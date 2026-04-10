@@ -8,7 +8,8 @@ NAMESPACE="${NAMESPACE:-default}"
 IAM_ROLE_ARN="${IAM_ROLE_ARN:?'IAM_ROLE_ARN is required.'}"
 LAMBDA_ARN="${LAMBDA_ARN:?'LAMBDA_ARN is required.'}"
 EXTERNAL_ID="${EXTERNAL_ID:?'EXTERNAL_ID is required.'}"
-CREDENTIALS_FILE="${CREDENTIALS_FILE:-$HOME/.aws/credentials}"
+: "${AWS_ACCESS_KEY_ID:?'AWS_ACCESS_KEY_ID is required.'}"
+: "${AWS_SECRET_ACCESS_KEY:?'AWS_SECRET_ACCESS_KEY is required.'}"
 
 DYNAMIC_CONFIG_RELATIVE="${DYNAMIC_CONFIG_RELATIVE:-config/dynamicconfig/development-sql.yaml}"
 DYNAMIC_CONFIG="${TEMPORAL_DIR}/${DYNAMIC_CONFIG_RELATIVE}"
@@ -26,14 +27,6 @@ ensure_key() {
   fi
 }
 
-# ── AWS credentials ───────────────────────────────────────────────────────────
-log "Reading credentials from $CREDENTIALS_FILE"
-
-AWS_ACCESS_KEY_ID="$(awk -F' *= *' '/aws_access_key_id/    {print $2; exit}' "$CREDENTIALS_FILE")"
-AWS_SECRET_ACCESS_KEY="$(awk -F' *= *' '/aws_secret_access_key/ {print $2; exit}' "$CREDENTIALS_FILE")"
-export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
-
-log "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:0:8}..."
 
 # ── Dynamic config ────────────────────────────────────────────────────────────
 log "Updating dynamic config: $DYNAMIC_CONFIG"
