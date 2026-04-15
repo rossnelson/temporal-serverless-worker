@@ -18,8 +18,27 @@ else
 fi
 
 WORKFLOW=${1:-""}
-NAMESPACE=${NAMESPACE:-default}
-TASK_QUEUE=${TQ_NAME:-worker-versioning-sample-ross}
+
+# Prefer TEMPORAL_ADDRESS/TEMPORAL_NAMESPACE if set (staging), else local defaults
+TEMPORAL_ADDRESS="${TEMPORAL_ADDRESS:-}"
+NAMESPACE="${TEMPORAL_NAMESPACE:-${NAMESPACE:-default}}"
+TASK_QUEUE="${TQ_NAME:-worker-versioning-sample-ross}"
+
+# Decode base64 TLS certs to temp files and build path flags
+TLS_FLAGS=()
+TMPDIR_TLS=""
+cleanup_tls() { [[ -n "$TMPDIR_TLS" ]] && rm -rf "$TMPDIR_TLS"; }
+trap cleanup_tls EXIT
+
+if [[ -n "${TEMPORAL_TLS_CLIENT_CERT_BASE64:-}" && -n "${TEMPORAL_TLS_CLIENT_KEY_BASE64:-}" ]]; then
+  TMPDIR_TLS="$(mktemp -d)"
+  echo "$TEMPORAL_TLS_CLIENT_CERT_BASE64" | base64 -d > "$TMPDIR_TLS/client.pem"
+  echo "$TEMPORAL_TLS_CLIENT_KEY_BASE64"  | base64 -d > "$TMPDIR_TLS/client.key"
+  TLS_FLAGS+=(--tls-cert-path "$TMPDIR_TLS/client.pem")
+  TLS_FLAGS+=(--tls-key-path  "$TMPDIR_TLS/client.key")
+  # Don't set --tls-ca-path: the CLI replaces system root CAs entirely, breaking
+  # verification of server certs signed by public CAs. The system trust store handles it.
+fi
 
 usage() {
   echo "Usage: $0 <workflow>"
@@ -49,9 +68,15 @@ case "$WORKFLOW" in
     ;;
 esac
 
-echo "Starting $TYPE on $TASK_QUEUE..."
-temporal workflow start \
-  --type "$TYPE" \
-  --task-queue "$TASK_QUEUE" \
-  --namespace "$NAMESPACE" \
+echo "Starting $TYPE on $TASK_QUEUE (namespace: $NAMESPACE)..."
+TEMPORAL_CMD=(temporal workflow start
+  --type "$TYPE"
+  --task-queue "$TASK_QUEUE"
+  --namespace "$NAMESPACE"
   --input "$INPUT"
+  "${TLS_FLAGS[@]}"
+)
+if [[ -n "$TEMPORAL_ADDRESS" ]]; then
+  TEMPORAL_CMD+=(--address "$TEMPORAL_ADDRESS")
+fi
+"${TEMPORAL_CMD[@]}"

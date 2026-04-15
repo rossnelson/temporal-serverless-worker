@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -37,27 +38,57 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 	logger := MakeLogger()
 	defer func() { _ = logger.Sync() }()
 
+	// TEMPORAL_ADDRESS / TEMPORAL_NAMESPACE take precedence over HOST_PORT / NAMESPACE
 	hostPort := getEnvDefault("HOST_PORT", defaultHostPort)
+	if v := os.Getenv("TEMPORAL_ADDRESS"); v != "" {
+		hostPort = v
+	}
 	namespace := getEnvDefault("NAMESPACE", defaultNamespace)
+	if v := os.Getenv("TEMPORAL_NAMESPACE"); v != "" {
+		namespace = v
+	}
 	taskQueueName := getEnvDefault("TQ_NAME", defaultTaskQueueName)
 	deploymentName := getEnvDefault("DEPLOYMENT_NAME", defaultDeploymentName)
 	buildID := getEnvDefault("BUILD_ID", defaultBuildID)
-	enableTLS := os.Getenv("ENABLE_TLS")
-	tlsKey := os.Getenv("TLS_KEY")
-	tlsCert := os.Getenv("TLS_CERT")
-	apiKey := os.Getenv("API_KEY")
 
 	var tlsConfig *tls.Config
 	var credentials client.Credentials
 
-	if enableTLS != "" {
+	clientCertB64 := os.Getenv("TEMPORAL_TLS_CLIENT_CERT_BASE64")
+	clientKeyB64 := os.Getenv("TEMPORAL_TLS_CLIENT_KEY_BASE64")
+
+	if clientCertB64 != "" && clientKeyB64 != "" {
+		// Staging path: certs provided as base64-encoded env vars
+		certPEM, err := base64.StdEncoding.DecodeString(clientCertB64)
+		if err != nil {
+			return fmt.Errorf("decode TEMPORAL_TLS_CLIENT_CERT_BASE64: %w", err)
+		}
+		keyPEM, err := base64.StdEncoding.DecodeString(clientKeyB64)
+		if err != nil {
+			return fmt.Errorf("decode TEMPORAL_TLS_CLIENT_KEY_BASE64: %w", err)
+		}
+		cert, err := tls.X509KeyPair(certPEM, keyPEM)
+		if err != nil {
+			return fmt.Errorf("build TLS key pair: %w", err)
+		}
+		// Don't set RootCAs — setting it replaces the system trust store entirely,
+		// breaking verification of server certs signed by public CAs. The client
+		// cert/key handle mTLS auth; the system trust store verifies the server cert.
+		tlsConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
+		logger.Info("TLS configured from env vars", zap.String("hostPort", hostPort), zap.String("namespace", namespace))
+	} else if enableTLS := os.Getenv("ENABLE_TLS"); enableTLS != "" {
+		// Legacy path: certs stored in AWS Secrets Manager
+		tlsKey := os.Getenv("TLS_KEY")
+		tlsCert := os.Getenv("TLS_CERT")
+		apiKey := os.Getenv("API_KEY")
+
 		tlsConfig = &tls.Config{InsecureSkipVerify: true}
 
-		config, err := config.LoadDefaultConfig(ctx)
+		awsCfg, err := config.LoadDefaultConfig(ctx)
 		if err != nil {
 			return err
 		}
-		svc := secretsmanager.NewFromConfig(config)
+		svc := secretsmanager.NewFromConfig(awsCfg)
 
 		if tlsKey != "" && tlsCert != "" {
 			clientCert, err := svc.GetSecretValue(ctx, &secretsmanager.GetSecretValueInput{SecretId: &tlsCert})
@@ -68,13 +99,12 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 			if err != nil {
 				return err
 			}
-
 			cert, err := tls.X509KeyPair([]byte(*clientCert.SecretString), []byte(*clientKey.SecretString))
 			if err != nil {
 				return err
 			}
 			tlsConfig.Certificates = append(tlsConfig.Certificates, cert)
-			logger.Info("Configured client cert", zap.String("cert", fmt.Sprintf("%#v", cert)))
+			logger.Info("Configured client cert from Secrets Manager", zap.String("cert", fmt.Sprintf("%#v", cert)))
 		}
 
 		if apiKey != "" {
